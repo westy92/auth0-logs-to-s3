@@ -401,7 +401,7 @@ module.exports =
 /* 6 */
 /***/ function(module, exports) {
 
-	module.exports = require(undefined);
+	module.exports = require("lodash");
 
 /***/ },
 /* 7 */

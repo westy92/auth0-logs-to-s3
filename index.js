@@ -5,6 +5,7 @@ const memoizee = require('memoizee');
 const moment = require('moment');
 const Request = require('request');
 const Webtask = require('webtask-tools');
+const metadata = require('./webtask.json');
 
 const app = express();
 
@@ -199,5 +200,9 @@ app.use((req, res, next) => {
 
 app.get('/', lastLogCheckpoint);
 app.post('/', lastLogCheckpoint);
+
+app.get('/meta', (req, res) => {
+  res.status(200).send(metadata);
+});
 
 module.exports = Webtask.fromExpress(app);

@@ -54,6 +54,7 @@ module.exports =
 	var moment = __webpack_require__(5);
 	var Request = __webpack_require__(6);
 	var Webtask = __webpack_require__(7);
+	var metadata = __webpack_require__(17);
 
 	var app = express();
 
@@ -242,6 +243,10 @@ module.exports =
 
 	app.get('/', lastLogCheckpoint);
 	app.post('/', lastLogCheckpoint);
+
+	app.get('/meta', function (req, res) {
+	  res.status(200).send(metadata);
+	});
 
 	module.exports = Webtask.fromExpress(app);
 
@@ -890,6 +895,49 @@ module.exports =
 /***/ function(module, exports) {
 
 	module.exports = require("boom");
+
+/***/ },
+/* 17 */
+/***/ function(module, exports) {
+
+	module.exports = {
+		"title": "Auth0 Logs to S3",
+		"name": "auth0-logs-to-s3",
+		"version": "1.0.5",
+		"author": "westy92",
+		"description": "This extension will take all of your Auth0 logs and export them to an AWS S3 Bucket",
+		"type": "cron",
+		"keywords": [
+			"auth0",
+			"extension"
+		],
+		"schedule": "0 */5 * * * *",
+		"auth0": {
+			"scopes": "read:logs"
+		},
+		"secrets": {
+			"BATCH_SIZE": {
+				"description": "The amount of logs to be read on each execution. Maximum is 100.",
+				"default": 100
+			},
+			"AWS_ACCESS_KEY_ID": {
+				"description": "AWS Access Key ID",
+				"required": true
+			},
+			"AWS_SECRET_ACCESS_KEY": {
+				"description": "AWS Secret Access Key",
+				"required": true
+			},
+			"AWS_BUCKET_NAME": {
+				"description": "AWS S3 Bucket Name",
+				"required": true
+			},
+			"AWS_REGION": {
+				"description": "AWS Region",
+				"default": "us-west-2"
+			}
+		}
+	};
 
 /***/ }
 /******/ ]);

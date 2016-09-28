@@ -50,10 +50,10 @@ module.exports =
 	var async = __webpack_require__(1);
 	var AWS = __webpack_require__(2);
 	var express = __webpack_require__(3);
-	var memoizer = __webpack_require__(4);
-	var moment = __webpack_require__(7);
-	var Request = __webpack_require__(8);
-	var Webtask = __webpack_require__(9);
+	var memoizee = __webpack_require__(4);
+	var moment = __webpack_require__(5);
+	var Request = __webpack_require__(6);
+	var Webtask = __webpack_require__(7);
 
 	var app = express();
 
@@ -196,32 +196,30 @@ module.exports =
 	  });
 	}
 
-	var getTokenCached = memoizer({
-	  load: function load(apiUrl, audience, clientId, clientSecret, cb) {
-	    Request({
-	      method: 'POST',
-	      url: apiUrl,
-	      json: true,
-	      body: {
-	        audience: audience,
-	        grant_type: 'client_credentials',
-	        client_id: clientId,
-	        client_secret: clientSecret
-	      }
-	    }, function (err, res, body) {
-	      if (err) {
-	        cb(null, err);
-	      } else if (!/^2/.test('' + res.statusCode)) {
-	        cb(null, JSON.stringify(body));
-	      } else {
-	        cb(body.access_token);
-	      }
-	    });
+	var getTokenCached = memoizee(function (apiUrl, audience, clientId, clientSecret, cb) {
+	  Request({
+	    method: 'POST',
+	    url: apiUrl,
+	    json: true,
+	    body: {
+	      audience: audience,
+	      grant_type: 'client_credentials',
+	      client_id: clientId,
+	      client_secret: clientSecret
+	    }
+	  }, function (err, res, body) {
+	    if (err) {
+	      cb(null, err);
+	    } else if (!/^2/.test('' + res.statusCode)) {
+	      cb(null, JSON.stringify(body));
+	    } else {
+	      cb(body.access_token);
+	    }
+	  });
+	}, {
+	  normalizer: function normalizer(args) {
+	    return args[0];
 	  },
-	  hash: function hash(apiUrl) {
-	    return apiUrl;
-	  },
-	  max: 100,
 	  maxAge: 1000 * 60 * 60
 	});
 
@@ -267,159 +265,27 @@ module.exports =
 
 /***/ },
 /* 4 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
-	const LRU        = __webpack_require__(5);
-	const _          = __webpack_require__(6);
-	const lru_params = [ 'max', 'maxAge', 'length', 'dispose', 'stale' ];
-
-	module.exports = function (options) {
-	  const cache      = new LRU(_.pick(options, lru_params));
-	  const load       = options.load;
-	  const hash       = options.hash;
-	  const bypass     = options.bypass;
-	  const itemMaxAge = options.itemMaxAge;
-	  const loading    = new Map();
-
-	  if (options.disable) {
-	    return load;
-	  }
-
-	  const result = function () {
-	    const args       = _.toArray(arguments);
-	    const parameters = args.slice(0, -1);
-	    const callback   = args.slice(-1).pop();
-	    const self       = this;
-
-	    var key;
-
-	    if (bypass && bypass.apply(self, parameters)) {
-	      return load.apply(self, args);
-	    }
-
-	    if (parameters.length === 0 && !hash) {
-	      //the load function only receives callback.
-	      key = '_';
-	    } else {
-	      key = hash.apply(self, parameters);
-	    }
-
-	    var fromCache = cache.get(key);
-
-	    if (fromCache) {
-	      return callback.apply(null, [null].concat(fromCache));
-	    }
-
-	    if (!loading.get(key)) {
-	      loading.set(key, []);
-
-	      load.apply(self, parameters.concat(function (err) {
-	        const args = _.toArray(arguments);
-
-	        //we store the result only if the load didn't fail.
-	        if (!err) {
-	          const result = args.slice(1);
-	          if (itemMaxAge) {
-	            cache.set(key, result, itemMaxAge.apply(self, parameters.concat(result)));
-	          } else {
-	            cache.set(key, result);
-	          }
-	        }
-
-	        //immediately call every other callback waiting
-	        loading.get(key).forEach(function (callback) {
-	          callback.apply(null, args);
-	        });
-
-	        loading.delete(key);
-	        /////////
-
-	        callback.apply(null, args);
-	      }));
-	    } else {
-	      loading.get(key).push(callback);
-	    }
-	  };
-
-	  result.keys = cache.keys.bind(cache);
-
-	  return result;
-	};
-
-
-	module.exports.sync = function (options) {
-	  const cache = new LRU(_.pick(options, lru_params));
-	  const load = options.load;
-	  const hash = options.hash;
-	  const disable = options.disable;
-	  const bypass = options.bypass;
-	  const self = this;
-	  const itemMaxAge = options.itemMaxAge;
-
-	  if (disable) {
-	    return load;
-	  }
-
-	  const result = function () {
-	    var args = _.toArray(arguments);
-
-	    if (bypass && bypass.apply(self, arguments)) {
-	      return load.apply(self, arguments);
-	    }
-
-	    var key = hash.apply(self, args);
-
-	    var fromCache = cache.get(key);
-
-	    if (fromCache) {
-	      return fromCache;
-	    }
-
-	    const result = load.apply(self, args);
-	    if (itemMaxAge) {
-	      cache.set(key, result, itemMaxAge.apply(self, args.concat([ result ])));
-	    } else {
-	      cache.set(key, result);
-	    }
-
-	    return result;
-	  };
-
-	  result.keys = cache.keys.bind(cache);
-
-	  return result;
-	};
-
+	module.exports = require("memoizee");
 
 /***/ },
 /* 5 */
 /***/ function(module, exports) {
 
-	module.exports = require("lru-cache");
+	module.exports = require("moment");
 
 /***/ },
 /* 6 */
 /***/ function(module, exports) {
 
-	module.exports = require("lodash");
-
-/***/ },
-/* 7 */
-/***/ function(module, exports) {
-
-	module.exports = require("moment");
-
-/***/ },
-/* 8 */
-/***/ function(module, exports) {
-
 	module.exports = require("request");
 
 /***/ },
-/* 9 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports.auth0 = __webpack_require__(10);
+	exports.auth0 = __webpack_require__(8);
 	exports.fromConnect = exports.fromExpress = fromConnect;
 	exports.fromHapi = fromHapi;
 	exports.fromServer = exports.fromRestify = fromServer;
@@ -504,7 +370,7 @@ module.exports =
 
 
 	    function readNotAvailable(path, options, cb) {
-	        var Boom = __webpack_require__(18);
+	        var Boom = __webpack_require__(16);
 
 	        if (typeof options === 'function') {
 	            cb = options;
@@ -515,8 +381,8 @@ module.exports =
 	    }
 
 	    function readFromPath(path, options, cb) {
-	        var Boom = __webpack_require__(18);
-	        var Request = __webpack_require__(8);
+	        var Boom = __webpack_require__(16);
+	        var Request = __webpack_require__(6);
 
 	        if (typeof options === 'function') {
 	            cb = options;
@@ -539,7 +405,7 @@ module.exports =
 	    }
 
 	    function writeNotAvailable(path, data, options, cb) {
-	        var Boom = __webpack_require__(18);
+	        var Boom = __webpack_require__(16);
 
 	        if (typeof options === 'function') {
 	            cb = options;
@@ -550,8 +416,8 @@ module.exports =
 	    }
 
 	    function writeToPath(path, data, options, cb) {
-	        var Boom = __webpack_require__(18);
-	        var Request = __webpack_require__(8);
+	        var Boom = __webpack_require__(16);
+	        var Request = __webpack_require__(6);
 
 	        if (typeof options === 'function') {
 	            cb = options;
@@ -575,14 +441,14 @@ module.exports =
 
 
 /***/ },
-/* 10 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var url = __webpack_require__(11);
-	var error = __webpack_require__(12);
-	var handleAppEndpoint = __webpack_require__(13);
-	var handleLogin = __webpack_require__(15);
-	var handleCallback = __webpack_require__(16);
+	var url = __webpack_require__(9);
+	var error = __webpack_require__(10);
+	var handleAppEndpoint = __webpack_require__(11);
+	var handleLogin = __webpack_require__(13);
+	var handleCallback = __webpack_require__(14);
 
 	module.exports = function (webtask, options) {
 	    if (typeof webtask !== 'function' || webtask.length !== 3) {
@@ -788,13 +654,13 @@ module.exports =
 
 
 /***/ },
-/* 11 */
+/* 9 */
 /***/ function(module, exports) {
 
 	module.exports = require("url");
 
 /***/ },
-/* 12 */
+/* 10 */
 /***/ function(module, exports) {
 
 	module.exports = function (err, res) {
@@ -807,10 +673,10 @@ module.exports =
 
 
 /***/ },
-/* 13 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var error = __webpack_require__(12);
+	var error = __webpack_require__(10);
 
 	module.exports = function (webtask, options, ctx, req, res, routingInfo) {
 	    return options.exclude && options.exclude(ctx, req, routingInfo.appPath)
@@ -839,7 +705,7 @@ module.exports =
 	        }
 
 	        try {
-	            ctx.user = req.user = __webpack_require__(14).verify(apiKey, secret);
+	            ctx.user = req.user = __webpack_require__(12).verify(apiKey, secret);
 	        }
 	        catch (e) {
 	            return options.loginError({
@@ -871,16 +737,16 @@ module.exports =
 
 
 /***/ },
-/* 14 */
+/* 12 */
 /***/ function(module, exports) {
 
 	module.exports = require("jsonwebtoken");
 
 /***/ },
-/* 15 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var error = __webpack_require__(12);
+	var error = __webpack_require__(10);
 
 	module.exports = function(options, ctx, req, res, routingInfo) {
 	    var authParams = {
@@ -925,10 +791,10 @@ module.exports =
 
 
 /***/ },
-/* 16 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var error = __webpack_require__(12);
+	var error = __webpack_require__(10);
 
 	module.exports = function (options, ctx, req, res, routingInfo) {
 	    if (!ctx.query.code) {
@@ -952,7 +818,7 @@ module.exports =
 	        }, res);
 	    }
 
-	    return __webpack_require__(17)
+	    return __webpack_require__(15)
 	        .post('https://' + authParams.domain + '/oauth/token')
 	        .type('form')
 	        .send({
@@ -978,7 +844,7 @@ module.exports =
 	        });
 
 	    function issueApiKey(id_token) {
-	        var jwt = __webpack_require__(14);
+	        var jwt = __webpack_require__(12);
 	        var claims;
 	        try {
 	            claims = jwt.decode(id_token);
@@ -1014,13 +880,13 @@ module.exports =
 
 
 /***/ },
-/* 17 */
+/* 15 */
 /***/ function(module, exports) {
 
 	module.exports = require("superagent");
 
 /***/ },
-/* 18 */
+/* 16 */
 /***/ function(module, exports) {
 
 	module.exports = require("boom");

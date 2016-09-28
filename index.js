@@ -1,7 +1,7 @@
 const async = require('async');
 const AWS = require('aws-sdk');
 const express = require('express');
-const memoizer = require('lru-memoizer');
+const memoizee = require('memoizee');
 const moment = require('moment');
 const Request = require('request');
 const Webtask = require('webtask-tools');
@@ -152,8 +152,8 @@ function getLogsFromAuth0(domain, token, take, from, cb) {
   });
 }
 
-const getTokenCached = memoizer({
-  load: (apiUrl, audience, clientId, clientSecret, cb) => {
+const getTokenCached = memoizee(
+  (apiUrl, audience, clientId, clientSecret, cb) => {
     Request({
       method: 'POST',
       url: apiUrl,
@@ -174,10 +174,11 @@ const getTokenCached = memoizer({
       }
     });
   },
-  hash: (apiUrl) => apiUrl,
-  max: 100,
-  maxAge: 1000 * 60 * 60
-});
+  {
+    normalizer: (args) => args[0],
+    maxAge: 1000 * 60 * 60,
+  },
+);
 
 app.use((req, res, next) => {
   const apiUrl = `https://${req.webtaskContext.data.AUTH0_DOMAIN}/oauth/token`;

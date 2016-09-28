@@ -21,7 +21,7 @@
     "async": "^1.5.2",
     "aws-sdk": "^2.6.4",
     "express": "^4.12.4",
-    "lru-memoizer": "^1.7.0",
+    "memoizee": "^0.4.1",
     "moment": "^2.10.3",
     "request": "^2.75.0",
     "webpack-tools": "^1.0.7",

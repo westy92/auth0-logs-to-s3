@@ -1,0 +1,38 @@
+{
+  "title": "Auth0 Logs to S3",
+  "name": "auth0-logs-to-s3",
+  "version": "1.0.0",
+  "author": "westy92",
+  "description": "This extension will take all of your Auth0 logs and export them to an AWS S3 Bucket",
+  "type": "cron",
+  "keywords": [
+    "auth0",
+    "extension"
+  ],
+  "schedule": "0 */5 * * * *",
+  "auth0": {
+    "scopes": "read:logs"
+  },
+  "secrets": {
+    "BATCH_SIZE": {
+      "description": "The amount of logs to be read on each execution. Maximum is 100.",
+      "default": 100
+    },
+    "AWS_ACCESS_KEY_ID": {
+      "description": "AWS Access Key ID",
+      "required": true
+    },
+    "AWS_SECRET_ACCESS_KEY": {
+      "description": "AWS Secret Access Key",
+      "required": true
+    },
+    "AWS_BUCKET_NAME": {
+      "description": "AWS S3 Bucket Name",
+      "required": true
+    },
+    "AWS_REGION": {
+      "description": "Azure Storage ContainerName",
+      "default": "us-west-2"
+    }
+  }
+}

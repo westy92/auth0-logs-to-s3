@@ -65,7 +65,7 @@ There are optional properties you can set (here they are with their defaults).
     --secret BATCH_SIZE="100" \
 ```
 
-> You can get your Global Client Id/Secret here: https://auth0.com/docs/api/v1
+> You can get your Global Client Id/Secret [here](https://auth0.com/docs/api/management/v2).
 
 ## Usage
 
@@ -104,3 +104,5 @@ Auth0 helps you to:
 ## License
 
 This project is licensed under the MIT license. See the [LICENSE](LICENSE) file for more info.
+
+The original sources were heavily influenced by [auth0/auth0-logs-to-azure-blob-storage](https://github.com/auth0/auth0-logs-to-azure-blob-storage).

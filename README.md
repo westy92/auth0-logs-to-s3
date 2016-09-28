@@ -30,6 +30,10 @@ You will need to setup an IAM user with the following policy (replace your-bucke
 
 > You will also need to create an S3 Bucket to put the logs into if you have not already done so.
 
+### Automatic Item Expiry
+
+You can configure the S3 bucket with a lifecycle rule to enforce automatic deletion after X days.  See more information [here](http://docs.aws.amazon.com/AmazonS3/latest/dev/intro-lifecycle-rules.html).
+
 ## Configure Webtask
 
 If you haven't configured Webtask on your machine run this first:

@@ -44,7 +44,7 @@ function lastLogCheckpoint(req, res) {
         const getLogs = (context) => {
           console.log(`Logs from: ${context.checkpointId || 'Start'}.`);
 
-          let take = Number.parseInt(ctx.data.BATCH_SIZE || 100);
+          let take = Number.parseInt(ctx.data.BATCH_SIZE, 10) || 100;
 
           take = Math.min(100, take);
 

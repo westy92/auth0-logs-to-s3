@@ -87,7 +87,7 @@ module.exports =
 	      var getLogs = function getLogs(context) {
 	        console.log('Logs from: ' + (context.checkpointId || 'Start') + '.');
 
-	        var take = Number.parseInt(ctx.data.BATCH_SIZE || 100);
+	        var take = Number.parseInt(ctx.data.BATCH_SIZE, 10) || 100;
 
 	        take = Math.min(100, take);
 
@@ -903,7 +903,7 @@ module.exports =
 	module.exports = {
 		"title": "Auth0 Logs to S3",
 		"name": "auth0-logs-to-s3",
-		"version": "1.0.5",
+		"version": "1.0.6",
 		"author": "westy92",
 		"description": "This extension will take all of your Auth0 logs and export them to an AWS S3 Bucket",
 		"type": "cron",

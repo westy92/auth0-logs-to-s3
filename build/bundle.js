@@ -83,13 +83,6 @@ module.exports =
 
 	    // Start the process.
 	    async.waterfall([function (callback) {
-	      var params = {
-	        Bucket: ctx.data.AWS_BUCKET_NAME
-	      };
-	      s3.createBucket(params, function (err) {
-	        return callback(err);
-	      });
-	    }, function (callback) {
 	      var getLogs = function getLogs(context) {
 	        console.log('Logs from: ' + (context.checkpointId || 'Start') + '.');
 

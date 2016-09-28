@@ -40,12 +40,6 @@ function lastLogCheckpoint(req, res) {
     // Start the process.
     async.waterfall([
       (callback) => {
-        const params = {
-          Bucket: ctx.data.AWS_BUCKET_NAME
-        };
-        s3.createBucket(params, (err) => callback(err));
-      },
-      (callback) => {
         const getLogs = (context) => {
           console.log(`Logs from: ${context.checkpointId || 'Start'}.`);
 

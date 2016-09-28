@@ -8,7 +8,8 @@ This extension will take all of your Auth0 logs and export them to an AWS S3 Buc
 
 First you'll need to [create an Amazon Web Services account](https://aws.amazon.com/).
 
-You will need to setup an IAM user with the following policy:
+You will need to setup an IAM user with the following policy (replace your-bucket-name with an actual bucket name):
+
 ```json
 {
     "Version": "2012-10-17",
@@ -17,16 +18,17 @@ You will need to setup an IAM user with the following policy:
             "Sid": "AllowedActions",
             "Effect": "Allow",
             "Action": [
-                "s3:CreateBucket",
                 "s3:PutObject"
             ],
             "Resource": [
-                "arn:aws:s3:::your-bucket-name"
+                "arn:aws:s3:::your-bucket-name/*"
             ]
         }
     ]
 }
 ```
+
+> You will also need to create an S3 Bucket to put the logs into if you have not already done so.
 
 ## Configure Webtask
 
@@ -49,6 +51,7 @@ wt cron schedule \
     --secret AUTH0_DOMAIN="YOUR_AUTH0_DOMAIN" \
     --secret AUTH0_CLIENT_ID="YOUR_AUTH0_GLOBAL_CLIENT_ID" \
     --secret AUTH0_CLIENT_SECRET="YOUR_AUTH0_GLOBAL_CLIENT_SECRET" \
+    --secret BATCH_SIZE="100" \
     --secret AWS_ACCESS_KEY_ID="YOUR_AWS_ACCESS_KEY_ID" \
     --secret AWS_SECRET_ACCESS_KEY="YOUR_AWS_SECRET_ACCESS_KEY" \
     --secret AWS_BUCKET_NAME="YOUR_AWS_BUCKET_NAME" \

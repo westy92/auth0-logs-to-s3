@@ -10,9 +10,16 @@ const Webtask   = require('webtask-tools');
 const app = express();
 
 function lastLogCheckpoint(req, res) {
-  let ctx               = req.webtaskContext;
-  let required_settings = ['AUTH0_DOMAIN', 'AUTH0_CLIENT_ID', 'AUTH0_CLIENT_SECRET', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_BUCKET_NAME'];
-  let missing_settings  = required_settings.filter((setting) => !ctx.data[setting]);
+  let ctx = req.webtaskContext;
+  let required_settings = [
+    'AUTH0_DOMAIN',
+    'AUTH0_CLIENT_ID',
+    'AUTH0_CLIENT_SECRET',
+    'AWS_ACCESS_KEY_ID',
+    'AWS_SECRET_ACCESS_KEY',
+    'AWS_BUCKET_NAME',
+  ];
+  let missing_settings = required_settings.filter((setting) => !ctx.data[setting]);
 
   if (missing_settings.length) {
     return res.status(400).send({ message: `Missing settings: ${missing_settings.join(', ')}` });
@@ -346,6 +353,9 @@ function getLogsFromAuth0(domain, token, take, from, cb) {
     if (err) {
       console.log('Error getting logs', err);
       cb(null, err);
+    } else if (body.statusCode !== 200) {
+      console.log('Error getting logs', body);
+      cb(null, body);
     } else {
       cb(body);
     }
@@ -367,6 +377,8 @@ const getTokenCached = memoizer({
     }, (err, res, body) => {
       if (err) {
         cb(null, err);
+      } else if (body.statusCode !== 200) {
+        cb(null, body);
       } else {
         cb(body.access_token);
       }

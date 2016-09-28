@@ -397,6 +397,9 @@ module.exports =
 	    if (err) {
 	      console.log('Error getting logs', err);
 	      cb(null, err);
+	    } else if (body.statusCode !== 200) {
+	      console.log('Error getting logs', body);
+	      cb(null, body);
 	    } else {
 	      cb(body);
 	    }
@@ -418,6 +421,8 @@ module.exports =
 	    }, function (err, res, body) {
 	      if (err) {
 	        cb(null, err);
+	      } else if (body.statusCode !== 200) {
+	        cb(null, body);
 	      } else {
 	        cb(body.access_token);
 	      }

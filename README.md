@@ -72,7 +72,7 @@ There are optional properties you can set (here they are with their defaults).
 Use any Storage Explorer to access your logs. Each record will be saved in the following structure:
 
 ```
-{YOUR_AWS_BUCKET_NAME}/YYYY/MM/DD/HH/{LOG_ID}.json
+{YOUR_AWS_BUCKET_NAME}/YYYY/MM/DD/HH/{LOG_ISO_8601_DATE_STRING}-{LOG_ID}.json
 ```
 
 This will allow you to process the logs with Stream Analytics for example (which in turn can export them to Power BI).

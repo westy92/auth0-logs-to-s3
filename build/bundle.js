@@ -53,8 +53,7 @@ module.exports =
 	var memoizer = __webpack_require__(4);
 	var moment = __webpack_require__(7);
 	var Request = __webpack_require__(8);
-	var useragent = __webpack_require__(9);
-	var Webtask = __webpack_require__(10);
+	var Webtask = __webpack_require__(9);
 
 	var app = express();
 
@@ -64,6 +63,7 @@ module.exports =
 	  var missing_settings = required_settings.filter(function (setting) {
 	    return !ctx.data[setting];
 	  });
+	  var simultaneous_uploads = 5;
 
 	  if (missing_settings.length) {
 	    return res.status(400).send({ message: 'Missing settings: ' + missing_settings.join(', ') });
@@ -112,26 +112,9 @@ module.exports =
 
 	      getLogs({ checkpointId: startCheckpointId });
 	    }, function (context, callback) {
-	      context.logs = context.logs.map(function (record) {
-	        var level = 0;
-	        record.type_code = record.type;
-	        if (logTypes[record.type]) {
-	          level = logTypes[record.type].level;
-	          record.type = logTypes[record.type].event;
-	        }
-
-	        var agent = useragent.parse(record.user_agent);
-	        record.os = agent.os.toString();
-	        record.os_version = agent.os.toVersion();
-	        record.device = agent.device.toString();
-	        record.device_version = agent.device.toVersion();
-	        return record;
-	      });
-	      callback(null, context);
-	    }, function (context, callback) {
 	      console.log('Uploading logs to S3...');
 
-	      async.eachLimit(context.logs, 5, function (log, cb) {
+	      async.eachLimit(context.logs, simultaneous_uploads, function (log, cb) {
 	        var date = moment(log.date);
 	        var url = date.format('YYYY/MM/DD/HH') + '/' + date.toISOString() + '-' + log._id + '.json';
 	        console.log('Uploading ' + url + '.');
@@ -170,204 +153,18 @@ module.exports =
 	        });
 	      }
 
-	      console.log('Job complete.');
 	      return req.webtaskContext.storage.set({ checkpointId: context.checkpointId, totalLogsProcessed: context.logs.length }, { force: 1 }, function (error) {
 	        if (error) {
 	          console.log('Error storing checkpoint', error);
 	          return res.status(500).send({ error: error });
 	        }
 
+	        console.log('Job complete.');
 	        res.sendStatus(200);
 	      });
 	    });
 	  });
 	}
-
-	var logTypes = {
-	  's': {
-	    event: 'Success Login',
-	    level: 1 // Info
-	  },
-	  'seacft': {
-	    event: 'Success Exchange',
-	    level: 1 // Info
-	  },
-	  'seccft': {
-	    event: 'Success Exchange (Client Credentials)',
-	    level: 1 // Info
-	  },
-	  'feacft': {
-	    event: 'Failed Exchange',
-	    level: 3 // Error
-	  },
-	  'feccft': {
-	    event: 'Failed Exchange (Client Credentials)',
-	    level: 3 // Error
-	  },
-	  'f': {
-	    event: 'Failed Login',
-	    level: 3 // Error
-	  },
-	  'w': {
-	    event: 'Warnings During Login',
-	    level: 2 // Warning
-	  },
-	  'du': {
-	    event: 'Deleted User',
-	    level: 1 // Info
-	  },
-	  'fu': {
-	    event: 'Failed Login (invalid email/username)',
-	    level: 3 // Error
-	  },
-	  'fp': {
-	    event: 'Failed Login (wrong password)',
-	    level: 3 // Error
-	  },
-	  'fc': {
-	    event: 'Failed by Connector',
-	    level: 3 // Error
-	  },
-	  'fco': {
-	    event: 'Failed by CORS',
-	    level: 3 // Error
-	  },
-	  'con': {
-	    event: 'Connector Online',
-	    level: 1 // Info
-	  },
-	  'coff': {
-	    event: 'Connector Offline',
-	    level: 3 // Error
-	  },
-	  'fcpro': {
-	    event: 'Failed Connector Provisioning',
-	    level: 4 // Critical
-	  },
-	  'ss': {
-	    event: 'Success Signup',
-	    level: 1 // Info
-	  },
-	  'fs': {
-	    event: 'Failed Signup',
-	    level: 3 // Error
-	  },
-	  'cs': {
-	    event: 'Code Sent',
-	    level: 0 // Debug
-	  },
-	  'cls': {
-	    event: 'Code/Link Sent',
-	    level: 0 // Debug
-	  },
-	  'sv': {
-	    event: 'Success Verification Email',
-	    level: 0 // Debug
-	  },
-	  'fv': {
-	    event: 'Failed Verification Email',
-	    level: 0 // Debug
-	  },
-	  'scp': {
-	    event: 'Success Change Password',
-	    level: 1 // Info
-	  },
-	  'fcp': {
-	    event: 'Failed Change Password',
-	    level: 3 // Error
-	  },
-	  'sce': {
-	    event: 'Success Change Email',
-	    level: 1 // Info
-	  },
-	  'fce': {
-	    event: 'Failed Change Email',
-	    level: 3 // Error
-	  },
-	  'scu': {
-	    event: 'Success Change Username',
-	    level: 1 // Info
-	  },
-	  'fcu': {
-	    event: 'Failed Change Username',
-	    level: 3 // Error
-	  },
-	  'scpn': {
-	    event: 'Success Change Phone Number',
-	    level: 1 // Info
-	  },
-	  'fcpn': {
-	    event: 'Failed Change Phone Number',
-	    level: 3 // Error
-	  },
-	  'svr': {
-	    event: 'Success Verification Email Request',
-	    level: 0 // Debug
-	  },
-	  'fvr': {
-	    event: 'Failed Verification Email Request',
-	    level: 3 // Error
-	  },
-	  'scpr': {
-	    event: 'Success Change Password Request',
-	    level: 0 // Debug
-	  },
-	  'fcpr': {
-	    event: 'Failed Change Password Request',
-	    level: 3 // Error
-	  },
-	  'fn': {
-	    event: 'Failed Sending Notification',
-	    level: 3 // Error
-	  },
-	  'sapi': {
-	    event: 'API Operation'
-	  },
-	  'limit_ui': {
-	    event: 'Too Many Calls to /userinfo',
-	    level: 4 // Critical
-	  },
-	  'api_limit': {
-	    event: 'Rate Limit On API',
-	    level: 4 // Critical
-	  },
-	  'sdu': {
-	    event: 'Successful User Deletion',
-	    level: 1 // Info
-	  },
-	  'fdu': {
-	    event: 'Failed User Deletion',
-	    level: 3 // Error
-	  },
-	  'fapi': {
-	    event: 'Failed API Operation',
-	    level: 3 // Error
-	  },
-	  'limit_wc': {
-	    event: 'Blocked Account',
-	    level: 3 // Error
-	  },
-	  'limit_mu': {
-	    event: 'Blocked IP Address',
-	    level: 3 // Error
-	  },
-	  'slo': {
-	    event: 'Success Logout',
-	    level: 1 // Info
-	  },
-	  'flo': {
-	    event: ' Failed Logout',
-	    level: 3 // Error
-	  },
-	  'sd': {
-	    event: 'Success Delegation',
-	    level: 1 // Info
-	  },
-	  'fd': {
-	    event: 'Failed Delegation',
-	    level: 3 // Error
-	  }
-	};
 
 	function getLogsFromAuth0(domain, token, take, from, cb) {
 	  var url = 'https://' + domain + '/api/v2/logs';
@@ -604,7 +401,7 @@ module.exports =
 /* 6 */
 /***/ function(module, exports) {
 
-	module.exports = require("lodash");
+	module.exports = require(undefined);
 
 /***/ },
 /* 7 */
@@ -620,15 +417,9 @@ module.exports =
 
 /***/ },
 /* 9 */
-/***/ function(module, exports) {
-
-	module.exports = require("useragent");
-
-/***/ },
-/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports.auth0 = __webpack_require__(11);
+	exports.auth0 = __webpack_require__(10);
 	exports.fromConnect = exports.fromExpress = fromConnect;
 	exports.fromHapi = fromHapi;
 	exports.fromServer = exports.fromRestify = fromServer;
@@ -713,7 +504,7 @@ module.exports =
 
 
 	    function readNotAvailable(path, options, cb) {
-	        var Boom = __webpack_require__(19);
+	        var Boom = __webpack_require__(18);
 
 	        if (typeof options === 'function') {
 	            cb = options;
@@ -724,7 +515,7 @@ module.exports =
 	    }
 
 	    function readFromPath(path, options, cb) {
-	        var Boom = __webpack_require__(19);
+	        var Boom = __webpack_require__(18);
 	        var Request = __webpack_require__(8);
 
 	        if (typeof options === 'function') {
@@ -748,7 +539,7 @@ module.exports =
 	    }
 
 	    function writeNotAvailable(path, data, options, cb) {
-	        var Boom = __webpack_require__(19);
+	        var Boom = __webpack_require__(18);
 
 	        if (typeof options === 'function') {
 	            cb = options;
@@ -759,7 +550,7 @@ module.exports =
 	    }
 
 	    function writeToPath(path, data, options, cb) {
-	        var Boom = __webpack_require__(19);
+	        var Boom = __webpack_require__(18);
 	        var Request = __webpack_require__(8);
 
 	        if (typeof options === 'function') {
@@ -784,14 +575,14 @@ module.exports =
 
 
 /***/ },
-/* 11 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var url = __webpack_require__(12);
-	var error = __webpack_require__(13);
-	var handleAppEndpoint = __webpack_require__(14);
-	var handleLogin = __webpack_require__(16);
-	var handleCallback = __webpack_require__(17);
+	var url = __webpack_require__(11);
+	var error = __webpack_require__(12);
+	var handleAppEndpoint = __webpack_require__(13);
+	var handleLogin = __webpack_require__(15);
+	var handleCallback = __webpack_require__(16);
 
 	module.exports = function (webtask, options) {
 	    if (typeof webtask !== 'function' || webtask.length !== 3) {
@@ -997,13 +788,13 @@ module.exports =
 
 
 /***/ },
-/* 12 */
+/* 11 */
 /***/ function(module, exports) {
 
 	module.exports = require("url");
 
 /***/ },
-/* 13 */
+/* 12 */
 /***/ function(module, exports) {
 
 	module.exports = function (err, res) {
@@ -1016,10 +807,10 @@ module.exports =
 
 
 /***/ },
-/* 14 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var error = __webpack_require__(13);
+	var error = __webpack_require__(12);
 
 	module.exports = function (webtask, options, ctx, req, res, routingInfo) {
 	    return options.exclude && options.exclude(ctx, req, routingInfo.appPath)
@@ -1048,7 +839,7 @@ module.exports =
 	        }
 
 	        try {
-	            ctx.user = req.user = __webpack_require__(15).verify(apiKey, secret);
+	            ctx.user = req.user = __webpack_require__(14).verify(apiKey, secret);
 	        }
 	        catch (e) {
 	            return options.loginError({
@@ -1080,16 +871,16 @@ module.exports =
 
 
 /***/ },
-/* 15 */
+/* 14 */
 /***/ function(module, exports) {
 
 	module.exports = require("jsonwebtoken");
 
 /***/ },
-/* 16 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var error = __webpack_require__(13);
+	var error = __webpack_require__(12);
 
 	module.exports = function(options, ctx, req, res, routingInfo) {
 	    var authParams = {
@@ -1134,10 +925,10 @@ module.exports =
 
 
 /***/ },
-/* 17 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var error = __webpack_require__(13);
+	var error = __webpack_require__(12);
 
 	module.exports = function (options, ctx, req, res, routingInfo) {
 	    if (!ctx.query.code) {
@@ -1161,7 +952,7 @@ module.exports =
 	        }, res);
 	    }
 
-	    return __webpack_require__(18)
+	    return __webpack_require__(17)
 	        .post('https://' + authParams.domain + '/oauth/token')
 	        .type('form')
 	        .send({
@@ -1187,7 +978,7 @@ module.exports =
 	        });
 
 	    function issueApiKey(id_token) {
-	        var jwt = __webpack_require__(15);
+	        var jwt = __webpack_require__(14);
 	        var claims;
 	        try {
 	            claims = jwt.decode(id_token);
@@ -1223,13 +1014,13 @@ module.exports =
 
 
 /***/ },
-/* 18 */
+/* 17 */
 /***/ function(module, exports) {
 
 	module.exports = require("superagent");
 
 /***/ },
-/* 19 */
+/* 18 */
 /***/ function(module, exports) {
 
 	module.exports = require("boom");

@@ -33,7 +33,7 @@ function lastLogCheckpoint(req, res) {
     AWS.config.update({
       accessKeyId: ctx.data.AWS_ACCESS_KEY_ID,
       secretAccessKey: ctx.data.AWS_SECRET_ACCESS_KEY,
-      region: ctx.data.AWS_REGION,
+      region: ctx.data.AWS_REGION || 'us-west-2',
     });
     const s3 = new AWS.S3({apiVersion: '2006-03-01'});
 
@@ -43,7 +43,7 @@ function lastLogCheckpoint(req, res) {
         const getLogs = (context) => {
           console.log(`Logs from: ${context.checkpointId || 'Start'}.`);
 
-          let take = Number.parseInt(ctx.data.BATCH_SIZE);
+          let take = Number.parseInt(ctx.data.BATCH_SIZE || 100);
 
           take = Math.min(100, take);
 
@@ -90,7 +90,7 @@ function lastLogCheckpoint(req, res) {
 
         async.eachLimit(context.logs, 5, (log, cb) => {
           const date = moment(log.date);
-          const url = `${date.format('YYYY/MM/DD/HH')}/${log._id}.json`;
+          const url = `${date.format('YYYY/MM/DD/HH')}/${date.toISOString()}-${log._id}.json`;
           console.log(`Uploading ${url}.`);
 
           const params = {

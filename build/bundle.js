@@ -77,7 +77,7 @@ module.exports =
 	    AWS.config.update({
 	      accessKeyId: ctx.data.AWS_ACCESS_KEY_ID,
 	      secretAccessKey: ctx.data.AWS_SECRET_ACCESS_KEY,
-	      region: ctx.data.AWS_REGION
+	      region: ctx.data.AWS_REGION || 'us-west-2'
 	    });
 	    var s3 = new AWS.S3({ apiVersion: '2006-03-01' });
 
@@ -86,7 +86,7 @@ module.exports =
 	      var getLogs = function getLogs(context) {
 	        console.log('Logs from: ' + (context.checkpointId || 'Start') + '.');
 
-	        var take = Number.parseInt(ctx.data.BATCH_SIZE);
+	        var take = Number.parseInt(ctx.data.BATCH_SIZE || 100);
 
 	        take = Math.min(100, take);
 
@@ -133,7 +133,7 @@ module.exports =
 
 	      async.eachLimit(context.logs, 5, function (log, cb) {
 	        var date = moment(log.date);
-	        var url = date.format('YYYY/MM/DD/HH') + '/' + log._id + '.json';
+	        var url = date.format('YYYY/MM/DD/HH') + '/' + date.toISOString() + '-' + log._id + '.json';
 	        console.log('Uploading ' + url + '.');
 
 	        var params = {

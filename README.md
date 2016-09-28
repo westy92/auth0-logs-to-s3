@@ -51,13 +51,18 @@ wt cron schedule \
     --secret AUTH0_DOMAIN="YOUR_AUTH0_DOMAIN" \
     --secret AUTH0_CLIENT_ID="YOUR_AUTH0_GLOBAL_CLIENT_ID" \
     --secret AUTH0_CLIENT_SECRET="YOUR_AUTH0_GLOBAL_CLIENT_SECRET" \
-    --secret BATCH_SIZE="100" \
     --secret AWS_ACCESS_KEY_ID="YOUR_AWS_ACCESS_KEY_ID" \
     --secret AWS_SECRET_ACCESS_KEY="YOUR_AWS_SECRET_ACCESS_KEY" \
     --secret AWS_BUCKET_NAME="YOUR_AWS_BUCKET_NAME" \
     --json \
     "*/5 * * * *" \
     ./build/bundle.js
+```
+
+There are optional properties you can set (here they are with their defaults).
+```
+    --secret AWS_REGION="us-west-2" \
+    --secret BATCH_SIZE="100" \
 ```
 
 > You can get your Global Client Id/Secret here: https://auth0.com/docs/api/v1

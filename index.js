@@ -353,8 +353,8 @@ function getLogsFromAuth0(domain, token, take, from, cb) {
     if (err) {
       console.log('Error getting logs', err);
       cb(null, err);
-    } else if (body.statusCode !== 200) {
-      console.log('Error getting logs', body);
+    } else if (!(/^2/.test('' + res.statusCode))) {
+      console.log('Error getting logs', res);
       cb(null, JSON.stringify(body));
     } else {
       cb(body);
@@ -377,7 +377,7 @@ const getTokenCached = memoizer({
     }, (err, res, body) => {
       if (err) {
         cb(null, err);
-      } else if (body.statusCode !== 200) {
+      } else if (!(/^2/.test('' + res.statusCode))) {
         cb(null, JSON.stringify(body));
       } else {
         cb(body.access_token);

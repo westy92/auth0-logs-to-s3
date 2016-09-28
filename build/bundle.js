@@ -163,7 +163,7 @@ module.exports =
 	      });
 	    }], function (err, context) {
 	      if (err) {
-	        console.log('Job failed.');
+	        console.log('Job failed.', err);
 
 	        return req.webtaskContext.storage.set({ checkpointId: startCheckpointId }, { force: 1 }, function (error) {
 	          if (error) {

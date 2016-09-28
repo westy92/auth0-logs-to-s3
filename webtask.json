@@ -31,7 +31,7 @@
       "required": true
     },
     "AWS_REGION": {
-      "description": "Azure Storage ContainerName",
+      "description": "AWS Region",
       "default": "us-west-2"
     }
   }
